@@ -35,7 +35,7 @@ export async function POST(request) {
         recent: clip(b.recent, b.contextMode === 'full' ? 60000 : 6000),
         asked: clip((Array.isArray(b.asked) ? b.asked : []).join('\n'), 2000),
       });
-      return await geminiStream({ tier: 'smart', prompt, maxTokens: 400, temperature: 0.5, signal: request.signal });
+      return await geminiStream({ tier: b.quality === 'smart' ? 'smart' : 'fast', prompt, maxTokens: 400, temperature: 0.5, signal: request.signal });
     }
 
     if (b.mode === 'summary') {

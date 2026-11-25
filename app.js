@@ -12,6 +12,9 @@
     summaryEverySeconds: 90,                     // how often the running summary refreshes
     questionDelayMs: 600,                        // wait after the other side stops before asking for questions
     minWordsForConcepts: 5,
+    liveConceptWords: 18,                        // while someone is still talking: check for new terms every ~18 new words
+    liveConceptGapMs: 4000,                      //   but no more often than every 4 s
+    liveQuestionWords: 45,                       // while the other side is still talking: refresh questions every ~45 new words
   };
 
   // ---------- State ----------
@@ -20,7 +23,9 @@
     running: false,
     mode: null, // 'live' | 'test'
     contextMode: 'hybrid',
-    qGapMs: 6000,
+    qGapMs: 8000,
+    qQuality: 'fast',
+    cLastAt: 0,
     meetingType: 'Sales discovery',
     skill: '',
     sources: {},          // name -> { ws, node, stream, startWall, letters:Set }
@@ -46,7 +51,7 @@
   const $ = (id) => document.getElementById(id);
   const els = {};
   ['lock', 'lockForm', 'passcode', 'lockMsg', 'app', 'liveDot', 'meetingType', 'startBtn', 'testFile', 'testLabel', 'stopBtn', 'askBtn',
-   'docsBtn', 'docCount', 'contextMode', 'qGap', 'setupStatus', 'logoutBtn', 'status', 'testAudio', 'transcript', 'transcriptEmpty',
+   'docsBtn', 'docCount', 'contextMode', 'qModel', 'qGap', 'setupStatus', 'logoutBtn', 'status', 'testAudio', 'transcript', 'transcriptEmpty',
    'sourceHint', 'questions', 'qState', 'qHistory', 'concepts', 'latGrid', 'modelInfo', 'copyLog', 'drawer', 'closeDrawer', 'docTag',
    'docFiles', 'docList', 'prepareBtn', 'prepareMsg', 'accountBrief', 'teamBrief', 'termCount', 'termList'].forEach((id) => { els[id] = $(id); });
 
@@ -55,6 +60,7 @@
   const words = (s) => (String(s || '').trim().match(/\S+/g) || []).length;
   const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const now = () => performance.now();
+  const lastWords = (s, k) => String(s || '').trim().split(/\s+/).slice(-k).join(' ');
 
   function setStatus(msg, kind) {
     els.status.textContent = msg || '';
@@ -364,6 +370,7 @@
       }
     }
     renderTurn(t);
+    if (!m.end_of_turn && !t.final && t.text) onPartial(t);
 
     if (m.end_of_turn && !t.final) {
       t.final = true;
@@ -399,14 +406,38 @@
 
   function lineOf(t) { return speakerLabel(t) + ': ' + t.text; }
 
+  function liveTail() {
+    const out = [];
+    S.turns.forEach((t) => { if (!t.final && t.text) out.push(t); });
+    return out;
+  }
+
   function recentWindow() {
     const cutoff = Date.now() - CONFIG.windowSeconds * 1000;
     let list = S.finals.filter((t) => t.wall >= cutoff);
     if (list.length < 4) list = S.finals.slice(-4);
-    return list.map(lineOf).join('\n');
+    return list.concat(liveTail()).map(lineOf).join('\n');
   }
 
-  function fullTranscript() { return S.finals.map(lineOf).join('\n'); }
+  function fullTranscript() { return S.finals.concat(liveTail()).map(lineOf).join('\n'); }
+
+  // While someone is still talking: explain terms and refresh questions without waiting for them to stop.
+  function onPartial(t) {
+    const t0 = now();
+    glossaryCards(t.text, t0);
+    const n = words(t.text);
+    if (n - (t.aiWords || 0) >= CONFIG.liveConceptWords && Date.now() - S.cLastAt >= CONFIG.liveConceptGapMs) {
+      const seg = lastWords(t.text, n - (t.aiWords || 0));
+      t.aiWords = n;
+      S.cQueue.push({ text: seg, t0 });
+      pumpConcepts();
+    }
+    const counts = otherSideActive() ? t.src !== 'you' : true;
+    if (counts && n - (t.qWords || 0) >= CONFIG.liveQuestionWords && !S.q.inflight && Date.now() - S.q.lastAt >= S.qGapMs) {
+      t.qWords = n;
+      runQuestions(t0);
+    }
+  }
 
   function onFinalTurn(t) {
     S.finals.push(t);
@@ -426,24 +457,31 @@
     });
   }
 
-  function conceptsFor(t, t0) {
-    if (S.contextMode === 'hybrid') {
-      for (const { g, re } of S.matchers) {
-        const k = norm(g.term);
-        if (S.shown.has(k) || !re.test(t.text)) continue;
-        S.shown.add(k);
-        addCard(g, 'docs');
-        recordLat('card_docs', now() - t0);
-      }
+  function glossaryCards(text, t0) {
+    if (S.contextMode !== 'hybrid') return;
+    for (const { g, re } of S.matchers) {
+      const k = norm(g.term);
+      if (S.shown.has(k) || !re.test(text)) continue;
+      S.shown.add(k);
+      addCard(g, 'docs');
+      recordLat('card_docs', now() - t0);
     }
-    if (words(t.text) < CONFIG.minWordsForConcepts) return;
-    S.cQueue.push({ text: t.text, t0 });
+  }
+
+  function conceptsFor(t, t0) {
+    glossaryCards(t.text, t0);
+    const n = words(t.text);
+    const remaining = n - (t.aiWords || 0);
+    if (remaining < CONFIG.minWordsForConcepts) return;
+    t.aiWords = n;
+    S.cQueue.push({ text: lastWords(t.text, remaining), t0 });
     pumpConcepts();
   }
 
   async function pumpConcepts() {
     if (S.cBusy || !S.cQueue.length) return;
     S.cBusy = true;
+    S.cLastAt = Date.now();
     const batch = S.cQueue.splice(0);
     const t0 = batch[0].t0;
     try {
@@ -533,10 +571,11 @@
   }
 
   async function runQuestions(t0) {
-    if (!S.finals.length) return;
+    if (!S.finals.length && !liveTail().length) return;
     if (S.q.ctl) S.q.ctl.abort();
     const ctl = new AbortController();
     S.q.ctl = ctl;
+    S.q.inflight = true;
     S.q.lastAt = Date.now();
     const start = t0 || now();
     if (S.q.current.length) {
@@ -557,6 +596,7 @@
         summary: S.contextMode === 'full' ? '' : S.summary,
         recent: S.contextMode === 'full' ? fullTranscript() : recentWindow(),
         asked: S.q.current.map((x) => x.q),
+        quality: S.qQuality,
       }, { stream: true, signal: ctl.signal });
       const reader = r.body.getReader();
       const dec = new TextDecoder();
@@ -584,6 +624,8 @@
       if (e.status === 429) setStatus('Gemini is busy or at its free-tier limit. Try “Ask now” in a few seconds.');
       else setStatus('Questions failed: ' + e.message);
       renderQuestions(S.q.current, false);
+    } finally {
+      if (S.q.ctl === ctl) S.q.inflight = false;
     }
   }
 
@@ -761,20 +803,23 @@
   els.startBtn.onclick = startLive;
   els.testFile.onchange = () => { const f = els.testFile.files[0]; els.testFile.value = ''; if (f) startTest(f); };
   els.stopBtn.onclick = () => stopAll();
-  els.askBtn.onclick = () => { if (!S.finals.length) { setStatus('Nothing to work from yet. Start a call or test first.', 'info'); return; } runQuestions(); };
+  els.askBtn.onclick = () => { if (!S.finals.length && !liveTail().length) { setStatus('Nothing to work from yet. Start a call or test first.', 'info'); return; } runQuestions(); };
   els.docsBtn.onclick = () => { els.drawer.hidden = false; renderDocs(); };
   els.closeDrawer.onclick = () => { els.drawer.hidden = true; };
   els.docFiles.onchange = () => { const f = Array.from(els.docFiles.files); els.docFiles.value = ''; if (f.length) addFiles(f); };
   els.prepareBtn.onclick = prepare;
   els.copyLog.onclick = copyLog;
   els.contextMode.onchange = () => { S.contextMode = els.contextMode.value; store('contextMode', S.contextMode); renderLatency(); };
-  els.qGap.onchange = () => { const v = Math.max(2, Math.min(60, Number(els.qGap.value) || 6)); els.qGap.value = v; S.qGapMs = v * 1000; store('qGap', v); };
+  els.qGap.onchange = () => { const v = Math.max(2, Math.min(60, Number(els.qGap.value) || 8)); els.qGap.value = v; S.qGapMs = v * 1000; store('qGap', v); };
+  els.qModel.onchange = () => { S.qQuality = els.qModel.value; store('qModel', S.qQuality); };
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.drawer.hidden = true; });
 
   // Start-up
   S.contextMode = load('contextMode', 'hybrid');
   els.contextMode.value = S.contextMode;
-  const gap = load('qGap', 6);
+  S.qQuality = load('qModel', 'fast');
+  els.qModel.value = S.qQuality;
+  const gap = load('qGap', 8);
   els.qGap.value = gap;
   S.qGapMs = gap * 1000;
   loadDocs();

@@ -42,8 +42,13 @@
               <option value="hybrid">Hybrid: term map + last 90 s + summary</option>
               <option value="full">Full transcript (for comparison)</option>
             </select>
+            <label for="qModel">Questions use</label>
+            <select id="qModel">
+              <option value="fast">Fast model (quicker)</option>
+              <option value="smart">Smart model (better, slower)</option>
+            </select>
             <label for="qGap">Minimum seconds between new questions</label>
-            <input id="qGap" type="number" min="2" max="60" step="1" value="6">
+            <input id="qGap" type="number" min="2" max="60" step="1" value="8">
             <div id="setupStatus" class="setup"></div>
             <button id="logoutBtn" class="btn small" type="button">Lock</button>
           </div>
