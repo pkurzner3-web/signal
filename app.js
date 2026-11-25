@@ -343,13 +343,37 @@
   }
 
   // ---------- Transcript ----------
-  function speakerLabel(t) {
+  function speakerLabel(t, speaker) {
     if (t.src === 'you') return 'You';
+    const sp = speaker || t.speaker;
     const src = S.sources[t.src];
     const letters = src ? src.letters.size : 0;
     const base = t.src === 'file' ? 'Speaker' : 'Other side';
-    if (t.speaker && t.speaker !== 'PENDING' && (t.src === 'file' || letters > 1)) return base + ' ' + t.speaker;
-    return t.src === 'file' ? 'Speaker' : 'Other side';
+    if (sp && sp !== 'PENDING' && (t.src === 'file' || letters > 1)) return base + ' ' + sp;
+    return base;
+  }
+
+  // Splits one turn into speaker segments using AssemblyAI's per-word speaker labels,
+  // so two people talking without a pause still show as two speakers.
+  function segmentsFrom(m, fallback) {
+    const ws = Array.isArray(m.words) ? m.words : [];
+    if (!ws.some((w) => w.speaker && w.speaker !== 'PENDING')) return null;
+    const segs = [];
+    for (const w of ws) {
+      const known = w.speaker && w.speaker !== 'PENDING' ? w.speaker : null;
+      const last = segs[segs.length - 1];
+      const sp = known || (last ? last.speaker : null);
+      if (!last || (known && last.speaker && known !== last.speaker)) segs.push({ speaker: sp, words: [w.text] });
+      else { if (!last.speaker) last.speaker = sp; last.words.push(w.text); }
+    }
+    // Fold tiny fragments (1 to 2 words) into the previous segment to avoid flicker.
+    const merged = [];
+    for (const sg of segs) {
+      const prev = merged[merged.length - 1];
+      if (prev && (sg.words.length < 3 || prev.speaker === sg.speaker)) prev.words.push(...sg.words);
+      else merged.push({ speaker: sg.speaker || fallback, words: sg.words.slice() });
+    }
+    return merged.map((x) => ({ speaker: x.speaker || fallback, text: x.words.join(' ') }));
   }
 
   function onTurn(srcName, m) {
@@ -361,12 +385,16 @@
     }
     const text = (m.transcript || m.utterance || '').trim();
     if (text) t.text = text;
-    if (m.speaker_label) {
-      t.speaker = m.speaker_label;
+    if (m.speaker_label) t.speaker = m.speaker_label;
+    if (srcName !== 'you') {
+      const segs = segmentsFrom(m, t.speaker);
+      if (segs) t.segments = segs;
       const src = S.sources[srcName];
-      if (src && m.speaker_label !== 'PENDING' && !src.letters.has(m.speaker_label)) {
-        src.letters.add(m.speaker_label);
-        if (src.letters.size === 2) S.turns.forEach((x) => { if (x.src === srcName && x !== t) renderTurn(x); }); // relabel earlier turns
+      const seen = [t.speaker].concat((t.segments || []).map((x) => x.speaker));
+      if (src) {
+        const before = src.letters.size;
+        seen.forEach((l) => { if (l && l !== 'PENDING') src.letters.add(l); });
+        if (before < 2 && src.letters.size >= 2) S.turns.forEach((x) => { if (x.src === srcName && x !== t) renderTurn(x); }); // relabel earlier turns
       }
     }
     renderTurn(t);
@@ -392,19 +420,28 @@
     if (intro) intro.remove();
     if (!t.el) {
       t.el = document.createElement('div');
-      t.el.innerHTML = '<span class="who"></span><p class="text"></p>';
       els.transcript.appendChild(t.el);
     }
     const nearBottom = els.transcript.scrollHeight - els.transcript.scrollTop - els.transcript.clientHeight < 80;
-    t.el.className = 'turn' + (t.final ? '' : ' partial');
-    const who = t.el.firstChild;
-    who.textContent = speakerLabel(t);
-    who.className = 'who ' + (t.src === 'you' ? 'you' : 'other');
-    t.el.lastChild.textContent = t.text;
+    t.el.className = 'turn-group' + (t.final ? '' : ' partial');
+    const parts = t.segments && t.segments.length > 1 ? t.segments : [{ speaker: t.speaker, text: t.text }];
+    t.el.innerHTML = '';
+    parts.forEach((part) => {
+      const row = document.createElement('div');
+      row.className = 'turn';
+      row.innerHTML = '<span class="who"></span><p class="text"></p>';
+      row.firstChild.textContent = speakerLabel(t, part.speaker);
+      row.firstChild.className = 'who ' + (t.src === 'you' ? 'you' : 'other');
+      row.lastChild.textContent = part.text;
+      t.el.appendChild(row);
+    });
     if (nearBottom) els.transcript.scrollTop = els.transcript.scrollHeight;
   }
 
-  function lineOf(t) { return speakerLabel(t) + ': ' + t.text; }
+  function lineOf(t) {
+    if (t.segments && t.segments.length > 1) return t.segments.map((x) => speakerLabel(t, x.speaker) + ': ' + x.text).join('\n');
+    return speakerLabel(t) + ': ' + t.text;
+  }
 
   function liveTail() {
     const out = [];

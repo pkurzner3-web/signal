@@ -77,7 +77,8 @@ input, select { font: 14px var(--sans); color: var(--fg); background: var(--surf
 .who.you { color: var(--you); }
 .who.other { color: var(--other); }
 .turn .text { margin: 0; }
-.turn.partial .text { color: var(--muted); font-style: italic; }
+.turn-group { display: flex; flex-direction: column; gap: 10px; }
+.turn-group.partial .text { color: var(--muted); font-style: italic; }
 
 .side { overflow: hidden; }
 .block { display: flex; flex-direction: column; min-height: 0; border-bottom: 1px solid var(--line); }
