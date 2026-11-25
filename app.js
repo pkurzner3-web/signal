@@ -358,7 +358,10 @@
     if (m.speaker_label) {
       t.speaker = m.speaker_label;
       const src = S.sources[srcName];
-      if (src && m.speaker_label !== 'PENDING') src.letters.add(m.speaker_label);
+      if (src && m.speaker_label !== 'PENDING' && !src.letters.has(m.speaker_label)) {
+        src.letters.add(m.speaker_label);
+        if (src.letters.size === 2) S.turns.forEach((x) => { if (x.src === srcName && x !== t) renderTurn(x); }); // relabel earlier turns
+      }
     }
     renderTurn(t);
 
@@ -463,7 +466,7 @@
       }
     } catch (e) {
       if (e.status === 429) setStatus('Gemini free-tier limit reached for a moment. Cards will resume shortly.');
-      else console.warn('concepts', e);
+      else setStatus('Concept cards failed: ' + e.message);
     } finally {
       S.cBusy = false;
       if (S.cQueue.length && S.running) pumpConcepts();
@@ -512,7 +515,9 @@
     els.questions.classList.toggle('streaming', streaming);
     els.questions.innerHTML = '';
     if (!list.length) {
-      els.questions.innerHTML = '<p class="empty-small">Thinking…</p>';
+      els.questions.innerHTML = streaming
+        ? '<p class="empty-small">Thinking…</p>'
+        : '<p class="empty-small">No questions yet. They refresh when the other side stops talking, or click Ask now.</p>';
       return;
     }
     list.forEach((item) => els.questions.appendChild(questionEl(item)));
@@ -569,13 +574,14 @@
       }
       if (ctl.signal.aborted) return;
       recordLat('q_done', now() - start);
+      if (/failed|busy|limit/i.test(els.status.textContent)) setStatus('');
       S.q.current = parseQuestions(text);
       renderQuestions(S.q.current, false);
       els.qState.textContent = '';
     } catch (e) {
       if (e.name === 'AbortError') return;
       els.qState.textContent = '';
-      if (e.status === 429) setStatus('Gemini free-tier limit reached for a moment. Try “Ask now” in a few seconds.');
+      if (e.status === 429) setStatus('Gemini is busy or at its free-tier limit. Try “Ask now” in a few seconds.');
       else setStatus('Questions failed: ' + e.message);
       renderQuestions(S.q.current, false);
     }

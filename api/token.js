@@ -1,10 +1,10 @@
 // Gives the browser a short-lived AssemblyAI token, so the real key never leaves the server.
-import { checkPasscode, json, errorResponse, HttpError } from '../lib/server.js';
+import { checkPasscode, json, errorResponse, HttpError, cleanKey } from '../lib/server.js';
 
 export async function POST(request) {
   const denied = checkPasscode(request);
   if (denied) return denied;
-  const key = process.env.ASSEMBLYAI_API_KEY;
+  const key = cleanKey(process.env.ASSEMBLYAI_API_KEY);
   if (!key) return json({ error: 'ASSEMBLYAI_API_KEY is not set in Vercel.' }, 500);
 
   try {
