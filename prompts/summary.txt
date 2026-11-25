@@ -1,0 +1,11 @@
+Update the running summary of a live {{meeting_type}} meeting.
+
+Keep it under 120 words. Cover: who is speaking and their role, their needs and pains, numbers and timelines mentioned, decisions or next steps, and open questions. Plain text, no headings.
+
+Previous summary:
+{{previous}}
+
+New conversation since then:
+{{transcript}}
+
+Updated summary:

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Passcode screen -->
+  <div id="lock" class="lock">
+    <form id="lockForm" class="lock-card">
+      <div class="brand"><span class="dot"></span>Signal</div>
+      <p class="muted">Live meeting copilot. Enter the team passcode.</p>
+      <label for="passcode" class="sr-only">Passcode</label>
+      <input id="passcode" type="password" autocomplete="current-password" placeholder="Passcode" required>
+      <button type="submit" class="btn primary">Enter</button>
+      <p id="lockMsg" class="error" role="alert"></p>
+    </form>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <div class="brand"><span class="dot" id="liveDot"></span>Signal</div>
+      <span class="chip" id="meetingType">Sales discovery</span>
+      <div class="controls">
+        <button id="startBtn" class="btn primary" type="button">Start live call</button>
+        <label class="btn" for="testFile" id="testLabel">Test with audio file</label>
+        <input id="testFile" type="file" accept="audio/*,video/*" hidden>
+        <button id="stopBtn" class="btn danger" type="button" hidden>Stop</button>
+        <button id="askBtn" class="btn" type="button" title="Get new questions now">Ask now</button>
+        <button id="docsBtn" class="btn" type="button">Documents <span id="docCount" class="count">0</span></button>
+        <details class="settings">
+          <summary class="btn">Settings</summary>
+          <div class="settings-panel">
+            <label for="contextMode">Context sent to the AI</label>
+            <select id="contextMode">
+              <option value="hybrid">Hybrid: term map + last 90 s + summary</option>
+              <option value="full">Full transcript (for comparison)</option>
+            </select>
+            <label for="qGap">Minimum seconds between new questions</label>
+            <input id="qGap" type="number" min="2" max="60" step="1" value="6">
+            <div id="setupStatus" class="setup"></div>
+            <button id="logoutBtn" class="btn small" type="button">Lock</button>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <div id="status" class="status" role="status"></div>
+    <audio id="testAudio" controls hidden></audio>
+
+    <main class="main">
+      <section class="pane transcript-pane" aria-label="Transcript">
+        <div class="pane-head"><h2>Transcript</h2><span class="hint" id="sourceHint">Use headphones on live calls</span></div>
+        <div id="transcript" class="transcript">
+          <div class="empty" id="transcriptEmpty">
+            <p><b>Start live call</b>: pick the browser tab with your Zoom, Meet or Teams call and tick <b>Share tab audio</b>. Your mic is labeled You; the tab is the other side.</p>
+            <p><b>Test with audio file</b>: plays a recording through Signal, no call needed.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="pane side" aria-label="Live help">
+        <div class="block">
+          <div class="pane-head"><h2>Ask next</h2><span class="hint" id="qState"></span></div>
+          <div id="questions" class="questions"><p class="empty-small">Questions appear when the other side stops talking.</p></div>
+          <details class="history"><summary>Earlier questions</summary><div id="qHistory"></div></details>
+        </div>
+        <div class="block">
+          <div class="pane-head"><h2>Concepts to know</h2></div>
+          <div id="concepts" class="concepts"><p class="empty-small">Technical terms are explained here as they come up.</p></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="latency" aria-label="Latency">
+      <div class="lat-grid" id="latGrid"></div>
+      <div class="lat-actions">
+        <span class="hint" id="modelInfo"></span>
+        <button id="copyLog" class="btn small" type="button">Copy latency log</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Documents drawer -->
+  <aside id="drawer" class="drawer" hidden aria-label="Documents">
+    <div class="drawer-head">
+      <h2>Documents</h2>
+      <button id="closeDrawer" class="btn small" type="button">Close</button>
+    </div>
+    <p class="muted">Upload PDFs or text files. <b>Account</b> = the other side. <b>Team</b> = our side. Then click Prepare so Signal can build briefs and a term map before the call.</p>
+    <div class="upload-row">
+      <label for="docTag">Tag</label>
+      <select id="docTag"><option value="account">Account</option><option value="team">Team</option></select>
+      <label class="btn" for="docFiles">Add files</label>
+      <input id="docFiles" type="file" multiple accept=".pdf,.txt,.md,.csv,text/plain,application/pdf" hidden>
+    </div>
+    <ul id="docList" class="doc-list"></ul>
+    <button id="prepareBtn" class="btn primary" type="button">Prepare</button>
+    <p id="prepareMsg" class="muted"></p>
+    <details class="briefs"><summary>Account brief</summary><pre id="accountBrief"></pre></details>
+    <details class="briefs"><summary>Team brief</summary><pre id="teamBrief"></pre></details>
+    <details class="briefs"><summary>Term map (<span id="termCount">0</span>)</summary><pre id="termList"></pre></details>
+  </aside>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

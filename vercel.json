@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "prompts/**",
+      "maxDuration": 60
+    }
+  }
+}

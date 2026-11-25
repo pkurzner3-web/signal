@@ -1,0 +1,5 @@
+{
+  "meetingTypes": [
+    { "id": "sales", "label": "Sales discovery", "skills": ["sales-discovery.md"] }
+  ]
+}

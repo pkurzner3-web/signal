@@ -1,0 +1,29 @@
+You are preparing a live meeting assistant before a {{meeting_type}} meeting.
+
+Read the documents below. Documents tagged [Account] describe the other side (the company or person we are meeting). Documents tagged [Team] describe our own side (our product, playbook, pricing, goals).
+
+Return JSON with exactly these keys:
+{
+  "account_brief": "Up to 200 words. Who they are, what they care about, likely needs and pains, key numbers, open questions worth asking.",
+  "team_brief": "Up to 200 words. What we offer, our differentiators, proof points, and what we want to learn or achieve in this meeting.",
+  "glossary": [
+    {
+      "term": "The technical term as it is usually said out loud, e.g. HBM",
+      "aliases": ["other ways it may be said or transcribed, e.g. high bandwidth memory"],
+      "explanation": "Plain English, under 25 words, for a smart non-specialist.",
+      "why_it_matters": "Under 15 words: why it matters in this meeting."
+    }
+  ]
+}
+
+Glossary rules:
+- 20 to 60 technical terms, products, acronyms or concepts that are likely to come up in this meeting.
+- Prefer terms from the documents and the skill below. Add closely related terms a specialist would likely say.
+- Skip everyday business words (revenue, customer, meeting).
+- Use only facts from the documents or widely known definitions. Do not invent company-specific facts.
+
+Skill for this meeting:
+{{skill}}
+
+Documents:
+{{documents}}
