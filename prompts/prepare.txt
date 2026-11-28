@@ -1,28 +1,37 @@
 You are preparing a live meeting assistant before a {{meeting_type}} meeting.
 
-Read the documents below. Documents tagged [Account] describe the other side (the company or person we are meeting). Documents tagged [Team] describe our own side (our product, playbook, pricing, goals).
+Read the documents below. Documents tagged {{other_tags}} describe the other side ({{other_label}}). Documents tagged {{our_tags}} describe our own side.
 
 Return JSON with exactly these keys:
 {
-  "account_brief": "Up to 200 words. Who they are, what they care about, likely needs and pains, key numbers, open questions worth asking.",
-  "team_brief": "Up to 200 words. What we offer, our differentiators, proof points, and what we want to learn or achieve in this meeting.",
+  "other_brief": "Up to 200 words about the other side: who they are, what matters to them, key facts and numbers, gaps worth probing.",
+  "our_brief": "Up to 200 words about our side: what we offer or need, what we want to learn or confirm in this meeting, how we will judge success.",
+  "checklist": ["Recommended questions that appear in the documents, e.g. from an interview guide or discovery checklist."],
   "glossary": [
     {
       "term": "The technical term as it is usually said out loud, e.g. HBM",
       "aliases": ["other ways it may be said or transcribed, e.g. high bandwidth memory"],
-      "explanation": "Plain English, under 25 words, for a smart non-specialist.",
+      "explanation": "Plain English, under 25 words, pitched at the audience above.",
       "why_it_matters": "Under 15 words: why it matters in this meeting."
     }
   ]
 }
 
-Glossary rules:
-- 20 to 60 technical terms, products, acronyms or concepts that are likely to come up in this meeting.
-- Prefer terms from the documents and the skill below. Add closely related terms a specialist would likely say.
-- Skip everyday business words (revenue, customer, meeting).
-- Use only facts from the documents or widely known definitions. Do not invent company-specific facts.
+Checklist rules:
+- Only include questions the documents explicitly recommend asking (interview guides, question banks, discovery checklists). Copy them closely, shortened to one line each.
+- Do not invent questions. If the documents recommend none, return an empty list.
+- At most 25.
 
-Skill for this meeting:
+Audience: the user is Stanford-educated. They know business and tech basics (what a GPU, the cloud, an API or a startup is) but not in-depth technical concepts, specific acronyms, or industry news and context (recent deals, product launches, market shifts, who competes with whom).
+
+Glossary rules:
+- 20 to 60 items this user would need explained that are likely to come up: in-depth technical concepts, specific acronyms, products and companies that need context, and relevant industry news or trends from the documents.
+- Skip basics this user already knows.
+- Prefer terms from the documents and the skills below. Add closely related terms a specialist would likely say.
+- Skip everyday business words.
+- Use only facts from the documents or widely known definitions. Do not invent facts about people or companies.
+
+Skills for this meeting:
 {{skill}}
 
 Documents:

@@ -1,0 +1,11 @@
+The user is running a {{meeting_type}} meeting and has a list of guide questions to cover.
+
+Here is what the user just said. Decide which guide questions it asks, even if worded differently. Only count questions the user actually asks, not topics merely mentioned.
+
+Return JSON only: {"covered": [list of ids]}. Return {"covered": []} if none.
+
+Guide questions:
+{{items}}
+
+What the user just said:
+{{said}}

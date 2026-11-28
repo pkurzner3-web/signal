@@ -5,14 +5,18 @@ Live meeting copilot for the LTV final project. Signal transcribes a call with s
 ## How to use it
 
 1. Open the Signal link in **Chrome** and enter the team passcode.
-2. **Documents** (optional but recommended): add PDFs or text files, tag each as **Account** (the other side) or **Team** (our side), then click **Prepare**. This builds two short briefs and a term map so explanations show instantly.
-3. Start one of these:
+2. **Pick the call type** next to the Signal name: **Sales discovery** or **Recruiting interview**. Each type has its own skills, documents and labels.
+3. **Call setup** (recommended): switch skills on or off, add documents and tag them, then click **Prepare for the call**. This builds two short briefs, a term map (so explanations show instantly) and a list of **guide questions** pulled from any interview guide or discovery checklist you upload.
+   - Sales: tag documents **Account** (the company you're meeting) or **Team** (your side).
+   - Recruiting: tag documents **Candidate** (resume) or **Role** (job description, interview guide).
+4. Start one of these:
    - **Start live call**: Chrome asks what to share. Pick the browser tab with your Zoom, Google Meet or Teams call and turn on **Share tab audio**. Then allow the microphone. Your mic is labeled **You**; the tab is the **Other side**. Wear headphones so your mic doesn't pick up the other side.
    - **Test with audio file**: pick any audio file (for example a podcast clip). It plays through Signal like a live call, with speakers labeled A, B.
-4. Watch the transcript on the left, **Ask next** questions and **Concepts to know** on the right. Click **Ask now** to get new questions at any time.
-5. Click **Stop** when done.
+5. Watch the transcript on the left, **Ask next** questions and **Concepts to know** on the right. Click **Ask now** to get new questions at any time.
+   - **Guide questions** shows which recommended questions you've asked (ticked automatically, even if you word them differently). Unasked ones get suggested in Ask next, marked "From your guide."
+6. Click **Stop** when done. The guide list opens so you can see what you missed.
 
-Documents, briefs and the term map are saved in your own browser only. Teammates add their own.
+Documents, briefs, the term map and guide questions are saved in your own browser only, separately for each call type. Teammates add their own.
 
 ## Latency readout
 
@@ -41,7 +45,8 @@ Settings also shows whether both keys are working and which Gemini models are in
   - `concepts.txt`: concept cards
   - `questions.txt`: follow-up questions
   - `summary.txt`: running summary
-- **Skills**: add a file to `skills/` and list it in `skills/index.json`. Format:
+  - `coverage.txt`: decides which guide questions you've asked
+- **Call types and skills**: `skills/index.json` lists each call type (its label, what the other side is called, document tags and which skills it uses). To add a skill, add a file to `skills/` and list it under a call type with `"on": true` (switched on by default) or `false`. To add a call type, copy one of the blocks in `index.json`. Skill format:
 
 ```
 ---

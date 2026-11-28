@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Signal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,10 +14,10 @@
   <div id="lock" class="lock">
     <form id="lockForm" class="lock-card">
       <div class="brand"><span class="dot"></span>Signal</div>
-      <p class="muted">Live meeting copilot. Enter the team passcode.</p>
-      <label for="passcode" class="sr-only">Passcode</label>
-      <input id="passcode" type="password" autocomplete="current-password" placeholder="Passcode" required>
-      <button type="submit" class="btn primary">Enter</button>
+      <p class="muted">Live help on technical calls: transcript, plain-English explanations and what to ask next.</p>
+      <label for="passcode" class="field-label">Team passcode</label>
+      <input id="passcode" type="password" autocomplete="current-password" required>
+      <button type="submit" class="btn primary">Open Signal</button>
       <p id="lockMsg" class="error" role="alert"></p>
     </form>
   </div>
@@ -26,14 +26,15 @@
   <div id="app" class="app" hidden>
     <header class="topbar">
       <div class="brand"><span class="dot" id="liveDot"></span>Signal</div>
-      <span class="chip" id="meetingType">Sales discovery</span>
+      <label for="meetingType" class="sr-only">Call type</label>
+      <select id="meetingType" class="meeting-select" title="Call type"><option>Sales discovery</option></select>
       <div class="controls">
         <button id="startBtn" class="btn primary" type="button">Start live call</button>
         <label class="btn" for="testFile" id="testLabel">Test with audio file</label>
         <input id="testFile" type="file" accept="audio/*,video/*" hidden>
         <button id="stopBtn" class="btn danger" type="button" hidden>Stop</button>
         <button id="askBtn" class="btn" type="button" title="Get new questions now">Ask now</button>
-        <button id="docsBtn" class="btn" type="button">Documents <span id="docCount" class="count">0</span></button>
+        <button id="docsBtn" class="btn" type="button">Call setup <span id="docCount" class="count">0</span></button>
         <details class="settings">
           <summary class="btn">Settings</summary>
           <div class="settings-panel">
@@ -62,10 +63,12 @@
     <main class="main">
       <section class="pane transcript-pane" aria-label="Transcript">
         <div class="pane-head"><h2>Transcript</h2><span class="hint" id="sourceHint">Use headphones on live calls</span></div>
+        <button id="jumpLive" class="btn jump" type="button" hidden>Jump to live</button>
         <div id="transcript" class="transcript">
           <div class="empty" id="transcriptEmpty">
-            <p><b>Start live call</b>: pick the browser tab with your Zoom, Meet or Teams call and tick <b>Share tab audio</b>. Your mic is labeled You; the tab is the other side.</p>
-            <p><b>Test with audio file</b>: plays a recording through Signal, no call needed.</p>
+            <p><b>1. Pick the call type</b> next to Signal, then open <b>Call setup</b> to add documents and choose skills.</p>
+            <p><b>2. Start live call</b>: pick the browser tab with your Zoom, Meet or Teams call and tick <b>Share tab audio</b>. Your mic is labeled You.</p>
+            <p>Or <b>Test with audio file</b> to play a recording through Signal, no call needed.</p>
           </div>
         </div>
       </section>
@@ -75,6 +78,12 @@
           <div class="pane-head"><h2>Ask next</h2><span class="hint" id="qState"></span></div>
           <div id="questions" class="questions"><p class="empty-small">Questions appear when the other side stops talking.</p></div>
           <details class="history"><summary>Earlier questions</summary><div id="qHistory"></div></details>
+        </div>
+        <div class="block guide-block" id="guideBlock" hidden>
+          <details id="guideDetails" class="guide">
+            <summary><span class="guide-title">Guide questions</span> <span class="hint" id="guideCount"></span></summary>
+            <ul id="guideList" class="guide-list"></ul>
+          </details>
         </div>
         <div class="block">
           <div class="pane-head"><h2>Concepts to know</h2></div>
@@ -92,24 +101,31 @@
     </footer>
   </div>
 
-  <!-- Documents drawer -->
-  <aside id="drawer" class="drawer" hidden aria-label="Documents">
+  <!-- Call setup drawer -->
+  <aside id="drawer" class="drawer" hidden aria-label="Call setup">
     <div class="drawer-head">
-      <h2>Documents</h2>
+      <h2>Call setup</h2>
       <button id="closeDrawer" class="btn small" type="button">Close</button>
     </div>
-    <p class="muted">Upload PDFs or text files. <b>Account</b> = the other side. <b>Team</b> = our side. Then click Prepare so Signal can build briefs and a term map before the call.</p>
+    <p class="muted" id="setupIntro"></p>
+
+    <h3 class="drawer-sub">Skills</h3>
+    <div id="skillList" class="skill-list"></div>
+
+    <h3 class="drawer-sub">Documents</h3>
+    <p class="muted" id="docHelp"></p>
     <div class="upload-row">
       <label for="docTag">Tag</label>
-      <select id="docTag"><option value="account">Account</option><option value="team">Team</option></select>
+      <select id="docTag"></select>
       <label class="btn" for="docFiles">Add files</label>
       <input id="docFiles" type="file" multiple accept=".pdf,.txt,.md,.csv,text/plain,application/pdf" hidden>
     </div>
     <ul id="docList" class="doc-list"></ul>
-    <button id="prepareBtn" class="btn primary" type="button">Prepare</button>
+    <button id="prepareBtn" class="btn primary" type="button">Prepare for the call</button>
     <p id="prepareMsg" class="muted"></p>
-    <details class="briefs"><summary>Account brief</summary><pre id="accountBrief"></pre></details>
-    <details class="briefs"><summary>Team brief</summary><pre id="teamBrief"></pre></details>
+    <details class="briefs"><summary id="otherBriefLabel">Brief</summary><pre id="otherBrief"></pre></details>
+    <details class="briefs"><summary id="ourBriefLabel">Brief</summary><pre id="ourBrief"></pre></details>
+    <details class="briefs"><summary>Guide questions (<span id="checklistCount">0</span>)</summary><pre id="checklistText"></pre></details>
     <details class="briefs"><summary>Term map (<span id="termCount">0</span>)</summary><pre id="termList"></pre></details>
   </aside>
 

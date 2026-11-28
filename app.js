@@ -27,13 +27,18 @@
     qQuality: 'fast',
     cLastAt: 0,
     meetingType: 'Sales discovery',
+    types: [],            // call types from skills/index.json
+    type: null,           // current call type
+    skillTexts: {},       // file -> text
+    activeSkills: [],     // files switched on for the current type
     skill: '',
+    checklist: [],        // guide questions: { id, q, asked }
     sources: {},          // name -> { ws, node, stream, startWall, letters:Set }
     audioCtx: null,
     turns: new Map(),     // key -> turn object
     finals: [],           // finalized turns in order
     docs: [],             // { id, name, tag, text }
-    briefs: { account: '', team: '' },
+    briefs: { other: '', ours: '' },
     glossary: [],
     matchers: [],
     shown: new Set(),     // normalized terms already shown as cards
@@ -52,8 +57,9 @@
   const els = {};
   ['lock', 'lockForm', 'passcode', 'lockMsg', 'app', 'liveDot', 'meetingType', 'startBtn', 'testFile', 'testLabel', 'stopBtn', 'askBtn',
    'docsBtn', 'docCount', 'contextMode', 'qModel', 'qGap', 'setupStatus', 'logoutBtn', 'status', 'testAudio', 'transcript', 'transcriptEmpty',
-   'sourceHint', 'questions', 'qState', 'qHistory', 'concepts', 'latGrid', 'modelInfo', 'copyLog', 'drawer', 'closeDrawer', 'docTag',
-   'docFiles', 'docList', 'prepareBtn', 'prepareMsg', 'accountBrief', 'teamBrief', 'termCount', 'termList'].forEach((id) => { els[id] = $(id); });
+   'sourceHint', 'jumpLive', 'questions', 'qState', 'qHistory', 'concepts', 'latGrid', 'modelInfo', 'copyLog', 'drawer', 'closeDrawer', 'docTag',
+   'docFiles', 'docList', 'prepareBtn', 'prepareMsg', 'otherBrief', 'ourBrief', 'otherBriefLabel', 'ourBriefLabel', 'termCount', 'termList',
+   'setupIntro', 'skillList', 'docHelp', 'checklistCount', 'checklistText', 'guideBlock', 'guideDetails', 'guideCount', 'guideList'].forEach((id) => { els[id] = $(id); });
 
   // ---------- Small helpers ----------
   const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -128,17 +134,134 @@
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // ---------- Skill ----------
-  async function loadSkill() {
+  // ---------- Call types and skills ----------
+  function otherLabel() { return (S.type && S.type.otherLabel) || 'Other side'; }
+  function tagInfo(id) { return ((S.type && S.type.docTags) || []).find((t) => t.id === id) || { id, label: id, side: 'other' }; }
+  function sideTag(side) { return ((S.type && S.type.docTags) || []).find((t) => t.side === side) || { label: side === 'ours' ? 'Our side' : 'Other side' }; }
+
+  function skillMeta(text) {
+    const name = (text.match(/^name:\s*(.+)$/m) || [])[1] || 'Skill';
+    const goal = (text.match(/^Goal:\s*(.+)$/m) || [])[1] || '';
+    const g = goal.trim();
+    return { name: name.trim(), goal: g ? g[0].toUpperCase() + g.slice(1) : '' };
+  }
+
+  async function loadTypes() {
     try {
-      const idx = await (await fetch('/skills/index.json')).json();
-      const type = idx.meetingTypes[0];
-      S.meetingType = type.label;
-      els.meetingType.textContent = type.label;
-      const texts = await Promise.all(type.skills.map((f) => fetch('/skills/' + f).then((r) => r.text())));
-      S.skill = texts.join('\n\n');
+      const idx = await (await fetch('/skills/index.json', { cache: 'no-store' })).json();
+      S.types = idx.meetingTypes || [];
     } catch {
-      S.skill = '';
+      S.types = [];
+    }
+    if (!S.types.length) S.types = [{ id: 'sales', label: 'Sales discovery', otherLabel: 'Prospect', docTags: [{ id: 'account', label: 'Account', side: 'other' }, { id: 'team', label: 'Team', side: 'ours' }], skills: [] }];
+    els.meetingType.innerHTML = '';
+    S.types.forEach((t) => {
+      const o = document.createElement('option');
+      o.value = t.id;
+      o.textContent = t.label;
+      els.meetingType.appendChild(o);
+    });
+    const saved = load('type', S.types[0].id);
+    await applyType(S.types.some((t) => t.id === saved) ? saved : S.types[0].id);
+  }
+
+  async function applyType(id) {
+    S.type = S.types.find((t) => t.id === id) || S.types[0];
+    S.meetingType = S.type.label;
+    els.meetingType.value = S.type.id;
+    store('type', S.type.id);
+    // Skills: load text once, remember which are switched on per call type
+    await Promise.all((S.type.skills || []).map(async (sk) => {
+      if (S.skillTexts[sk.file] != null) return;
+      try { S.skillTexts[sk.file] = await (await fetch('/skills/' + sk.file, { cache: 'no-store' })).text(); } catch { S.skillTexts[sk.file] = ''; }
+    }));
+    const defaults = (S.type.skills || []).filter((sk) => sk.on).map((sk) => sk.file);
+    S.activeSkills = load('skills.' + S.type.id, defaults).filter((f) => (S.type.skills || []).some((sk) => sk.file === f));
+    updateSkillText();
+    loadDocs();
+    renderSetup();
+    renderDocs();
+    renderGuide();
+    els.sourceHint.textContent = 'Use headphones on live calls';
+  }
+
+  function updateSkillText() {
+    S.skill = S.activeSkills.map((f) => S.skillTexts[f] || '').filter(Boolean).join('\n\n');
+  }
+
+  function renderSetup() {
+    els.setupIntro.textContent = S.type.intro || '';
+    els.skillList.innerHTML = '';
+    (S.type.skills || []).forEach((sk, i) => {
+      const meta = skillMeta(S.skillTexts[sk.file] || '');
+      const row = document.createElement('label');
+      row.className = 'skill';
+      row.htmlFor = 'skill-' + i;
+      row.innerHTML = '<input type="checkbox"><span><span class="skill-name"></span><span class="skill-goal"></span></span>';
+      const box = row.querySelector('input');
+      box.id = 'skill-' + i;
+      box.checked = S.activeSkills.includes(sk.file);
+      row.querySelector('.skill-name').textContent = meta.name;
+      row.querySelector('.skill-goal').textContent = meta.goal;
+      box.onchange = () => {
+        S.activeSkills = (S.type.skills || []).map((x) => x.file).filter((f) => (f === sk.file ? box.checked : S.activeSkills.includes(f)));
+        store('skills.' + S.type.id, S.activeSkills);
+        updateSkillText();
+        if (S.docs.length) els.prepareMsg.textContent = 'Skills changed. Click Prepare for the call to refresh the term map.';
+      };
+      els.skillList.appendChild(row);
+    });
+    els.docHelp.textContent = (S.type.docTags || []).map((t) => `${t.label}: ${t.hint || ''}`).join('. ') + '. Then click Prepare so Signal builds briefs, a term map and your guide questions before the call.';
+    els.docTag.innerHTML = '';
+    (S.type.docTags || []).forEach((t) => {
+      const o = document.createElement('option');
+      o.value = t.id;
+      o.textContent = t.label;
+      els.docTag.appendChild(o);
+    });
+    els.otherBriefLabel.textContent = sideTag('other').label + ' brief';
+    els.ourBriefLabel.textContent = sideTag('ours').label + ' brief';
+  }
+
+  // ---------- Guide questions ----------
+  function renderGuide() {
+    const list = S.checklist;
+    els.guideBlock.hidden = !list.length;
+    const asked = list.filter((x) => x.asked).length;
+    els.guideCount.textContent = list.length ? `${asked} of ${list.length} asked` : '';
+    els.guideList.innerHTML = '';
+    list.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = item.asked ? 'asked' : '';
+      li.innerHTML = '<span class="mark" aria-hidden="true"></span><span class="gq"></span>';
+      li.querySelector('.mark').textContent = item.asked ? '✓' : '';
+      li.querySelector('.gq').textContent = item.q;
+      li.title = item.asked ? 'Asked' : 'Not asked yet';
+      els.guideList.appendChild(li);
+    });
+    els.checklistCount.textContent = list.length;
+    els.checklistText.textContent = list.map((x) => '- ' + x.q).join('\n') || 'None found. Upload an interview guide or discovery checklist and click Prepare.';
+  }
+
+  function pendingGuide() { return S.checklist.filter((x) => !x.asked); }
+
+  async function checkCoverage(t) {
+    const pending = pendingGuide();
+    if (!pending.length || words(t.text) < 4) return;
+    if (S.mode === 'live' && t.src !== 'you') return; // only count questions you ask
+    try {
+      const d = await api('analyze', {
+        mode: 'coverage',
+        meetingType: S.meetingType,
+        items: pending.map((x) => ({ id: x.id, q: x.q })),
+        said: t.text,
+      });
+      const hit = new Set(d.covered || []);
+      if (!hit.size) return;
+      S.checklist.forEach((x) => { if (hit.has(x.id)) x.asked = true; });
+      renderGuide();
+    } catch (e) {
+      console.warn('coverage', e);
     }
   }
 
@@ -258,7 +381,7 @@
         tabStream.getAudioTracks()[0].addEventListener('ended', () => { if (S.running) stopAll('Tab sharing ended.'); });
       }
       if (tabStream && micStream) setStatus('');
-      els.sourceHint.textContent = (micStream ? 'Mic = You' : '') + (micStream && tabStream ? ' · ' : '') + (tabStream ? 'Tab = Other side' : '');
+      els.sourceHint.textContent = [micStream ? 'Mic is You' : '', tabStream ? 'tab is ' + otherLabel() : ''].filter(Boolean).join(', ');
       setRunningUi(true);
     } catch (e) {
       stopAll();
@@ -322,7 +445,9 @@
     els.startBtn.hidden = on;
     els.testLabel.hidden = on;
     els.stopBtn.hidden = !on;
+    els.meetingType.disabled = on;
     els.liveDot.classList.toggle('live', on);
+    if (!on && S.checklist.length) els.guideDetails.open = true; // show what was covered after the call
   }
 
   function resetSession() {
@@ -334,10 +459,12 @@
     S.summaryAt = Date.now();
     S.q.current = [];
     S.cQueue = [];
+    S.checklist.forEach((x) => { x.asked = false; });
+    renderGuide();
     if (S.q.ctl) S.q.ctl.abort();
     els.transcript.innerHTML = '';
     els.concepts.innerHTML = '<p class="empty-small">Technical terms are explained here as they come up.</p>';
-    els.questions.innerHTML = '<p class="empty-small">Questions appear when the other side stops talking.</p>';
+    els.questions.innerHTML = `<p class="empty-small">Questions appear when the ${otherLabel().toLowerCase()} stops talking.</p>`;
     els.qHistory.innerHTML = '';
     els.qState.textContent = '';
   }
@@ -348,7 +475,7 @@
     const sp = speaker || t.speaker;
     const src = S.sources[t.src];
     const letters = src ? src.letters.size : 0;
-    const base = t.src === 'file' ? 'Speaker' : 'Other side';
+    const base = t.src === 'file' ? 'Speaker' : otherLabel();
     if (sp && sp !== 'PENDING' && (t.src === 'file' || letters > 1)) return base + ' ' + sp;
     return base;
   }
@@ -436,6 +563,13 @@
       t.el.appendChild(row);
     });
     if (nearBottom) els.transcript.scrollTop = els.transcript.scrollHeight;
+    updateJump();
+  }
+
+  // "Jump to live" appears when you scroll up during a call.
+  function updateJump() {
+    const away = els.transcript.scrollHeight - els.transcript.scrollTop - els.transcript.clientHeight > 120;
+    els.jumpLive.hidden = !(S.running && away);
   }
 
   function lineOf(t) {
@@ -482,6 +616,7 @@
     conceptsFor(t, t0);
     maybeQuestions(t, t0);
     maybeSummary();
+    checkCoverage(t);
   }
 
   // ---------- Concept cards ----------
@@ -525,6 +660,7 @@
       const known = Array.from(S.shown).concat(S.contextMode === 'hybrid' ? S.glossary.map((g) => g.term) : []).slice(-300);
       const d = await api('analyze', {
         mode: 'concepts',
+        otherLabel: otherLabel(),
         contextMode: S.contextMode,
         meetingType: S.meetingType,
         skill: S.skill,
@@ -552,11 +688,11 @@
     const empty = els.concepts.querySelector('.empty-small');
     if (empty) empty.remove();
     const el = document.createElement('div');
-    el.className = 'card new';
+    el.className = 'card';
     el.innerHTML = '<div class="term"><span></span><span class="src"></span></div><p class="exp"></p><p class="why"></p>';
     el.querySelector('.term span').textContent = c.term;
     const src = el.querySelector('.src');
-    src.textContent = source === 'docs' ? 'term map' : 'AI';
+    src.textContent = source === 'docs' ? 'From your docs' : 'AI';
     src.classList.add(source);
     el.querySelector('.exp').textContent = c.explanation;
     el.querySelector('.why').textContent = c.why || '';
@@ -580,8 +716,11 @@
     text.split('\n').forEach((line) => {
       const m = line.match(/^\s*(\d)[.)]\s*(.+)$/);
       if (!m) return;
-      const parts = m[2].split('::');
-      out.push({ q: parts[0].trim(), why: (parts[1] || '').trim() });
+      let body = m[2].trim();
+      const guide = /^\[guide\]\s*/i.test(body);
+      body = body.replace(/^\[guide\]\s*/i, '');
+      const parts = body.split('::');
+      out.push({ q: parts[0].trim(), why: (parts[1] || '').trim(), guide });
     });
     return out.slice(0, 3);
   }
@@ -603,7 +742,8 @@
     el.className = 'q';
     el.innerHTML = '<p></p><div class="why"></div>';
     el.firstChild.textContent = item.q;
-    el.lastChild.textContent = item.why;
+    el.lastChild.textContent = item.guide ? 'From your guide' + (item.why ? ': ' + item.why : '') : item.why;
+    if (item.guide) el.classList.add('from-guide');
     return el;
   }
 
@@ -628,8 +768,10 @@
         contextMode: S.contextMode,
         meetingType: S.meetingType,
         skill: S.skill,
-        accountBrief: S.briefs.account,
-        teamBrief: S.briefs.team,
+        otherLabel: otherLabel(),
+        otherBrief: S.briefs.other,
+        ourBrief: S.briefs.ours,
+        guide: pendingGuide().map((x) => x.q),
         summary: S.contextMode === 'full' ? '' : S.summary,
         recent: S.contextMode === 'full' ? fullTranscript() : recentWindow(),
         asked: S.q.current.map((x) => x.q),
@@ -694,10 +836,10 @@
   // ---------- Latency readout ----------
   const METRICS = [
     ['transcript', 'Transcript'],
-    ['card_docs', 'Card (term map)'],
-    ['card_ai', 'Card (AI)'],
-    ['q_first', 'Questions: first words'],
-    ['q_done', 'Questions: done'],
+    ['card_docs', 'Card from docs'],
+    ['card_ai', 'Card from AI'],
+    ['q_first', 'Questions start'],
+    ['q_done', 'Questions done'],
   ];
 
   function recordLat(metric, ms) {
@@ -718,8 +860,8 @@
   function renderLatency() {
     els.latGrid.innerHTML = METRICS.map(([key, label]) => {
       const vals = S.lat.filter((x) => x.metric === key && x.mode === S.contextMode).slice(-10).map((x) => x.ms);
-      return `<span>${label}: <b>${fmt(median(vals))}</b></span>`;
-    }).join('') + `<span>(median of last 10, ${S.contextMode})</span>`;
+      return `<span>${label} <b>${fmt(median(vals))}</b></span>`;
+    }).join('') + `<span class="hint">Median of last 10, ${S.contextMode === 'full' ? 'full transcript' : 'hybrid'}</span>`;
   }
 
   async function copyLog() {
@@ -732,20 +874,28 @@
     }
   }
 
-  // ---------- Documents ----------
+  // ---------- Documents (kept per call type, in this browser) ----------
+  function docsKey() { return 'docs.' + (S.type ? S.type.id : 'sales'); }
+
   function saveDocs() {
-    const payload = { docs: S.docs, briefs: S.briefs, glossary: S.glossary };
-    if (!store('docs', payload)) {
-      store('docs', { docs: S.docs.map((d) => ({ ...d, text: d.text.slice(0, 20000) })), briefs: S.briefs, glossary: S.glossary });
+    const payload = { docs: S.docs, briefs: S.briefs, glossary: S.glossary, checklist: S.checklist.map((x) => x.q) };
+    if (!store(docsKey(), payload)) {
+      store(docsKey(), { ...payload, docs: S.docs.map((d) => ({ ...d, text: d.text.slice(0, 20000) })) });
     }
   }
 
   function loadDocs() {
-    const d = load('docs', null);
-    if (!d) return;
+    let d = load(docsKey(), null);
+    if (!d && S.type && S.type.id === 'sales') {
+      const old = load('docs', null); // documents saved before call types existed
+      if (old) d = { ...old, briefs: { other: (old.briefs || {}).account || '', ours: (old.briefs || {}).team || '' } };
+    }
+    d = d || {};
     S.docs = d.docs || [];
-    S.briefs = d.briefs || { account: '', team: '' };
+    S.briefs = d.briefs || { other: '', ours: '' };
     S.glossary = d.glossary || [];
+    S.checklist = (d.checklist || []).map((q, i) => ({ id: 'g' + (i + 1), q, asked: false }));
+    S.shown = new Set();
     buildMatchers();
   }
 
@@ -753,22 +903,24 @@
     els.docCount.textContent = S.docs.length;
     els.docList.innerHTML = '';
     S.docs.forEach((d) => {
+      const info = tagInfo(d.tag);
       const li = document.createElement('li');
       li.innerHTML = '<span class="name"></span><span class="tag"></span><button class="btn small" type="button">Remove</button>';
       li.querySelector('.name').textContent = d.name;
       const tag = li.querySelector('.tag');
-      tag.textContent = d.tag === 'team' ? 'Team' : 'Account';
-      if (d.tag === 'team') tag.classList.add('team');
+      tag.textContent = info.label;
+      if (info.side === 'ours') tag.classList.add('team');
       li.querySelector('button').onclick = () => {
         S.docs = S.docs.filter((x) => x.id !== d.id);
         saveDocs();
         renderDocs();
-        els.prepareMsg.textContent = 'Documents changed. Click Prepare to update.';
+        els.prepareMsg.textContent = 'Documents changed. Click Prepare for the call to update.';
       };
       els.docList.appendChild(li);
     });
-    els.accountBrief.textContent = S.briefs.account || 'Not prepared yet.';
-    els.teamBrief.textContent = S.briefs.team || 'Not prepared yet.';
+    if (!S.docs.length) els.docList.innerHTML = '<li class="empty-small">No documents yet. Add files above.</li>';
+    els.otherBrief.textContent = S.briefs.other || 'Not prepared yet.';
+    els.ourBrief.textContent = S.briefs.ours || 'Not prepared yet.';
     els.termCount.textContent = S.glossary.length;
     els.termList.textContent = S.glossary.map((g) => `${g.term}: ${g.explanation}`).join('\n') || 'Not prepared yet.';
   }
@@ -809,24 +961,32 @@
   async function prepare() {
     if (!S.docs.length) { els.prepareMsg.textContent = 'Add at least one document first.'; return; }
     els.prepareBtn.disabled = true;
-    els.prepareMsg.textContent = 'Preparing… this can take 10 to 40 seconds.';
+    els.prepareBtn.textContent = 'Preparing…';
+    els.prepareMsg.textContent = 'This can take 10 to 40 seconds.';
     const t0 = now();
     try {
       const d = await api('prepare', {
         meetingType: S.meetingType,
+        otherLabel: otherLabel(),
+        docTags: S.type.docTags || [],
         skill: S.skill,
         docs: S.docs.map((x) => ({ name: x.name, tag: x.tag, text: x.text })),
       });
-      S.briefs = { account: d.accountBrief, team: d.teamBrief };
+      S.briefs = { other: d.otherBrief, ours: d.ourBrief };
       S.glossary = d.glossary || [];
+      S.checklist = (d.checklist || []).map((q, i) => ({ id: 'g' + (i + 1), q, asked: false }));
       buildMatchers();
       saveDocs();
       renderDocs();
-      els.prepareMsg.textContent = `Ready: ${S.glossary.length} terms in the term map (${fmt(Math.round(now() - t0))}, ${d.model}).`;
+      renderGuide();
+      const n = S.checklist.length;
+      const g = S.glossary.length;
+      els.prepareMsg.textContent = `Ready: ${g} term${g === 1 ? '' : 's'} and ${n} guide question${n === 1 ? '' : 's'} (${fmt(Math.round(now() - t0))}).`;
     } catch (e) {
       els.prepareMsg.textContent = 'Prepare failed: ' + e.message;
     } finally {
       els.prepareBtn.disabled = false;
+      els.prepareBtn.textContent = 'Prepare for the call';
     }
   }
 
@@ -845,7 +1005,10 @@
   els.closeDrawer.onclick = () => { els.drawer.hidden = true; };
   els.docFiles.onchange = () => { const f = Array.from(els.docFiles.files); els.docFiles.value = ''; if (f.length) addFiles(f); };
   els.prepareBtn.onclick = prepare;
+  els.meetingType.onchange = () => { if (!S.running) applyType(els.meetingType.value); };
   els.copyLog.onclick = copyLog;
+  els.transcript.addEventListener('scroll', updateJump, { passive: true });
+  els.jumpLive.onclick = () => { els.transcript.scrollTop = els.transcript.scrollHeight; updateJump(); };
   els.contextMode.onchange = () => { S.contextMode = els.contextMode.value; store('contextMode', S.contextMode); renderLatency(); };
   els.qGap.onchange = () => { const v = Math.max(2, Math.min(60, Number(els.qGap.value) || 8)); els.qGap.value = v; S.qGapMs = v * 1000; store('qGap', v); };
   els.qModel.onchange = () => { S.qQuality = els.qModel.value; store('qModel', S.qQuality); };
@@ -859,13 +1022,11 @@
   const gap = load('qGap', 8);
   els.qGap.value = gap;
   S.qGapMs = gap * 1000;
-  loadDocs();
-  renderDocs();
   renderLatency();
-  loadSkill();
+  loadTypes();
   const saved = load('passcode', '');
   if (saved) unlock(saved).catch(() => lockApp(''));
 
   // Exposed for quick checks in the browser console.
-  window.__signal = { S, parseQuestions, buildMatchers, onTurn, CONFIG };
+  window.__signal = { S, parseQuestions, buildMatchers, onTurn, applyType, renderGuide, CONFIG };
 })();
