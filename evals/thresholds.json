@@ -1,0 +1,17 @@
+{
+  "final_wer": { "higherIsWorse": true, "maxDelta": 0.03 },
+  "interim_wer": { "higherIsWorse": true, "maxDelta": 0.05 },
+  "speaker_accuracy": { "higherIsWorse": false, "maxDelta": 0.1 },
+  "moment_coverage": { "higherIsWorse": false, "maxDelta": 0.15 },
+  "time_to_card_median_s": { "higherIsWorse": true, "maxDelta": 3 },
+  "churn_per_min": { "higherIsWorse": true, "maxDelta": 1 },
+  "question_quality_mean": { "higherIsWorse": false, "maxDelta": 0.3 },
+  "question_quality_pct4": { "higherIsWorse": false, "maxDelta": 0.15 },
+  "card_precision": { "higherIsWorse": false, "maxDelta": 0.15 },
+  "words_p50_ms": { "higherIsWorse": true, "maxDelta": 300 },
+  "transcript_p50_ms": { "higherIsWorse": true, "maxDelta": 500 },
+  "card_ai_p50_ms": { "higherIsWorse": true, "maxDelta": 500 },
+  "q_first_p50_ms": { "higherIsWorse": true, "maxDelta": 500 },
+  "q_first_p95_ms": { "higherIsWorse": true, "maxDelta": 1500 },
+  "error_rate": { "higherIsWorse": true, "maxDelta": 0.05 }
+}

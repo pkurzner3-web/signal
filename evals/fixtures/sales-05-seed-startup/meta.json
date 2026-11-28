@@ -1,0 +1,14 @@
+{
+  "type": "sales",
+  "you": "rep",
+  "docs": [
+    {
+      "file": "../_docs/lumora-one-pager.md",
+      "tag": "team"
+    },
+    {
+      "file": "../_docs/lumora-battlecard.md",
+      "tag": "team"
+    }
+  ]
+}

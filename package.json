@@ -4,5 +4,14 @@
   "type": "module",
   "engines": {
     "node": "22.x"
+  },
+  "scripts": {
+    "test": "node --test tests/logic.test.mjs",
+    "test:ui": "node --test tests/ui.test.mjs",
+    "eval": "node evals/run.mjs",
+    "make-audio": "node evals/make-audio.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.49.1"
   }
 }

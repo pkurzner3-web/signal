@@ -6,12 +6,35 @@
       "otherLabel": "Prospect",
       "intro": "Sales discovery: understand the buyer's needs, numbers and buying process.",
       "docTags": [
-        { "id": "account", "label": "Account", "side": "other", "hint": "the company you're meeting: filings, articles, past call notes" },
-        { "id": "team", "label": "Team", "side": "ours", "hint": "your side: product sheets, pricing, discovery checklist" }
+        {
+          "id": "account",
+          "label": "Account",
+          "side": "other",
+          "hint": "the company you're meeting: filings, articles, past call notes"
+        },
+        {
+          "id": "team",
+          "label": "Team",
+          "side": "ours",
+          "hint": "your side: product sheets, pricing, discovery checklist"
+        }
       ],
       "skills": [
-        { "file": "sales-discovery.md", "on": true },
-        { "file": "meddicc.md", "on": false }
+        {
+          "file": "sales-discovery.md",
+          "on": true
+        },
+        {
+          "file": "meddicc.md",
+          "on": false
+        }
+      ],
+      "notes": [
+        "Pain points",
+        "Stakeholders",
+        "Current tools and competitors",
+        "Timeline",
+        "Next steps"
       ]
     },
     {
@@ -20,12 +43,35 @@
       "otherLabel": "Candidate",
       "intro": "Recruiting interview: get specific evidence from the candidate and cover the interview guide.",
       "docTags": [
-        { "id": "candidate", "label": "Candidate", "side": "other", "hint": "resume, portfolio, LinkedIn export" },
-        { "id": "role", "label": "Role", "side": "ours", "hint": "job description, interview guide, scorecard" }
+        {
+          "id": "candidate",
+          "label": "Candidate",
+          "side": "other",
+          "hint": "resume, portfolio, LinkedIn export"
+        },
+        {
+          "id": "role",
+          "label": "Role",
+          "side": "ours",
+          "hint": "job description, interview guide, scorecard"
+        }
       ],
       "skills": [
-        { "file": "star-behavioral.md", "on": true },
-        { "file": "technical-depth.md", "on": true }
+        {
+          "file": "star-behavioral.md",
+          "on": true
+        },
+        {
+          "file": "technical-depth.md",
+          "on": true
+        }
+      ],
+      "notes": [
+        "Strengths",
+        "Concerns",
+        "Examples given",
+        "Follow-ups to check",
+        "Next steps"
       ]
     }
   ]

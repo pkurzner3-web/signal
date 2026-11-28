@@ -28,11 +28,15 @@
       <div class="brand"><span class="dot" id="liveDot"></span>Signal</div>
       <label for="meetingType" class="sr-only">Call type</label>
       <select id="meetingType" class="meeting-select" title="Call type"><option>Sales discovery</option></select>
+      <div id="talkBar" class="talk" hidden title="Talk time">
+        <span class="talk-label" id="talkLabel"></span>
+        <span class="talk-track"><span class="talk-you" id="talkYou"></span></span>
+      </div>
+      <span id="status" class="chip" role="status" hidden></span>
       <div class="controls">
         <button id="startBtn" class="btn primary" type="button">Start live call</button>
         <label class="btn" for="testFile" id="testLabel">Test with audio file</label>
         <input id="testFile" type="file" accept="audio/*,video/*" hidden>
-        <button id="stopBtn" class="btn danger" type="button" hidden>Stop</button>
         <button id="askBtn" class="btn" type="button" title="Get new questions now">Ask now</button>
         <button id="docsBtn" class="btn" type="button">Call setup <span id="docCount" class="count">0</span></button>
         <details class="settings">
@@ -40,7 +44,7 @@
           <div class="settings-panel">
             <label for="contextMode">Context sent to the AI</label>
             <select id="contextMode">
-              <option value="hybrid">Hybrid: term map + last 90 s + summary</option>
+              <option value="hybrid">Hybrid: term map, last 60 s and call notes</option>
               <option value="full">Full transcript (for comparison)</option>
             </select>
             <label for="qModel">Questions use</label>
@@ -50,14 +54,15 @@
             </select>
             <label for="qGap">Minimum seconds between new questions</label>
             <input id="qGap" type="number" min="2" max="60" step="1" value="8">
+            <label class="check"><input id="debugToggle" type="checkbox"> Show debug info</label>
             <div id="setupStatus" class="setup"></div>
             <button id="logoutBtn" class="btn small" type="button">Lock</button>
           </div>
         </details>
+        <button id="stopBtn" class="btn stop" type="button" hidden>Stop</button>
       </div>
     </header>
 
-    <div id="status" class="status" role="status"></div>
     <audio id="testAudio" controls hidden></audio>
 
     <main class="main">
@@ -77,26 +82,38 @@
         <div class="block">
           <div class="pane-head"><h2>Ask next</h2><span class="hint" id="qState"></span></div>
           <div id="questions" class="questions"><p class="empty-small">Questions appear when the other side stops talking.</p></div>
-          <details class="history"><summary>Earlier questions</summary><div id="qHistory"></div></details>
+          <details class="history" id="qHistoryWrap"><summary>Earlier questions</summary><div id="qHistory"></div></details>
         </div>
         <div class="block guide-block" id="guideBlock" hidden>
-          <details id="guideDetails" class="guide">
-            <summary><span class="guide-title">Guide questions</span> <span class="hint" id="guideCount"></span></summary>
+          <details id="guideDetails" class="fold">
+            <summary><span class="fold-title">Guide questions</span> <span class="hint" id="guideCount"></span></summary>
             <ul id="guideList" class="guide-list"></ul>
           </details>
         </div>
-        <div class="block">
+        <div class="block notes-block">
+          <details id="notesDetails" class="fold">
+            <summary><span class="fold-title">Call notes</span> <span class="hint" id="notesHint">Updates as the call goes</span></summary>
+            <div id="notes" class="notes"><p class="empty-small">Pain points, people, tools and next steps appear here during the call.</p></div>
+            <div id="recapWrap" class="recap" hidden>
+              <div class="recap-head"><h3>Recap</h3><button id="copyRecap" class="btn small" type="button">Copy as CRM notes</button></div>
+              <pre id="recap"></pre>
+            </div>
+          </details>
+        </div>
+        <div class="block concepts-block">
           <div class="pane-head"><h2>Concepts to know</h2></div>
           <div id="concepts" class="concepts"><p class="empty-small">Technical terms are explained here as they come up.</p></div>
+          <details class="history" id="conceptHistoryWrap" hidden><summary>Earlier concepts <span id="conceptHistoryCount" class="count"></span></summary><div id="conceptHistory"></div></details>
         </div>
       </section>
     </main>
 
-    <footer class="latency" aria-label="Latency">
+    <footer class="latency" id="debugBar" aria-label="Debug info" hidden>
       <div class="lat-grid" id="latGrid"></div>
       <div class="lat-actions">
         <span class="hint" id="modelInfo"></span>
         <button id="copyLog" class="btn small" type="button">Copy latency log</button>
+        <button id="exportBtn" class="btn small" type="button">Export session</button>
       </div>
     </footer>
   </div>
@@ -130,6 +147,7 @@
   </aside>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="logic.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

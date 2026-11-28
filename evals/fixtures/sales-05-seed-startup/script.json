@@ -1,0 +1,125 @@
+{
+  "title": "Founder of a seed-stage agent startup",
+  "voices": {
+    "rep": "Samantha",
+    "prospect": "Daniel"
+  },
+  "turns": [
+    {
+      "speaker": "rep",
+      "text": "Thanks for hopping on. What are you building?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Coding agents that keep an entire repository in context, so we're memory hungry by design.",
+      "moments": []
+    },
+    {
+      "speaker": "rep",
+      "text": "How are you running that today?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Rented GPUs from a neocloud, about thirty-two of them. Our margins are underwater because most of the spend is memory, not compute.",
+      "moments": [
+        {
+          "type": "pain",
+          "keywords": [
+            "margins",
+            "memory",
+            "spend",
+            "underwater"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Is there a specific cost you're trying to hit?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "We need gross margin above fifty percent before our Series A in about six months.",
+      "moments": [
+        {
+          "type": "timeline",
+          "keywords": [
+            "six months",
+            "series a",
+            "months"
+          ]
+        },
+        {
+          "type": "budget",
+          "keywords": [
+            "margin",
+            "fifty percent",
+            "cost"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "What have you tried so far?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Mostly software. We use vLLM's paged attention and some prompt caching. It helped, but not enough.",
+      "moments": [
+        {
+          "type": "competitor",
+          "keywords": [
+            "vllm",
+            "paged attention",
+            "prompt caching",
+            "software"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "If a hardware option made sense, what would hold you back?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Price, honestly. We can't sign anything that looks like a big annual contract right now.",
+      "moments": [
+        {
+          "type": "objection",
+          "keywords": [
+            "price",
+            "contract",
+            "annual",
+            "afford"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Who else would be involved in that decision?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Just me and my co-founder. We decide fast.",
+      "moments": [
+        {
+          "type": "decision_maker",
+          "keywords": [
+            "co-founder",
+            "decide",
+            "me"
+          ]
+        }
+      ]
+    }
+  ]
+}

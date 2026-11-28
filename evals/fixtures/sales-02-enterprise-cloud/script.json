@@ -1,0 +1,120 @@
+{
+  "title": "Director of cloud infrastructure at a large insurer",
+  "voices": {
+    "rep": "Samantha",
+    "prospect": "Daniel"
+  },
+  "turns": [
+    {
+      "speaker": "rep",
+      "text": "Thanks for joining. What prompted you to take this call?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "We're moving our claims assistant from a cloud API to running our own models on prem, mainly for data residency.",
+      "moments": []
+    },
+    {
+      "speaker": "rep",
+      "text": "Interesting. What does the on-prem footprint look like?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Two racks of GPUs in our Hartford data center today, and finance is already asking why the bill doubled.",
+      "moments": [
+        {
+          "type": "pain",
+          "keywords": [
+            "cost",
+            "bill",
+            "finance",
+            "doubled"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "When you say the bill doubled, how do you measure inference cost today?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Mostly cost per thousand claims processed. We're at about eleven dollars and the target from the CFO is six.",
+      "moments": [
+        {
+          "type": "budget",
+          "keywords": [
+            "cost",
+            "dollars",
+            "target",
+            "cfo",
+            "budget"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "That's a clear target. What alternatives are you looking at?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Our current GPU vendor wants to sell us a third rack, and we've had a demo from Vantage Fabric.",
+      "moments": [
+        {
+          "type": "competitor",
+          "keywords": [
+            "vantage",
+            "rack",
+            "vendor",
+            "alternative"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Who would need to approve bringing in a new vendor?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Procurement and our security architecture board. Security reviews here usually take three to four months.",
+      "moments": [
+        {
+          "type": "objection",
+          "keywords": [
+            "security",
+            "review",
+            "months",
+            "procurement"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Is there a date you're working toward?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Budget for next year locks in October, so anything we want funded has to be justified by then.",
+      "moments": [
+        {
+          "type": "timeline",
+          "keywords": [
+            "october",
+            "budget",
+            "date",
+            "year"
+          ]
+        }
+      ]
+    }
+  ]
+}

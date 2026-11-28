@@ -1,11 +1,22 @@
-Update the running summary of a live {{meeting_type}} meeting.
+Update the running notes for a live {{meeting_type}} meeting. The user is "You"; the other side is "{{other_label}}".
 
-Keep it under 120 words. Cover: who is speaking and their role, their needs and pains, numbers and timelines mentioned, decisions or next steps, and open questions. Plain text, no headings.
+Return JSON only:
+{
+  "summary": "Under 100 words: what the meeting is about so far and where it stands.",
+  "notes": { {{note_keys}} },
+  "signals": [{"type": "objection" or "competitor", "label": "under 6 words", "quote": "exact 3 to 10 word quote from the new conversation"}]
+}
+
+Notes rules:
+- Each notes key holds a list of short items (under 12 words each). Keep earlier items that are still true, add new ones, remove ones that were corrected.
+- Only include things actually said. Never guess.
+- signals: only objections and competitor or alternative mentions found in the NEW conversation. Empty list if none.
 
 Previous summary:
 {{previous}}
 
+Previous notes (JSON):
+{{previous_notes}}
+
 New conversation since then:
 {{transcript}}
-
-Updated summary:

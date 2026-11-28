@@ -1,0 +1,108 @@
+{
+  "title": "Principal architect at a cloud provider",
+  "voices": {
+    "rep": "Samantha",
+    "prospect": "Daniel"
+  },
+  "turns": [
+    {
+      "speaker": "rep",
+      "text": "Appreciate the time. What's your team focused on this half?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "We're redesigning the inference rack for our next region. The open question is memory disaggregation.",
+      "moments": []
+    },
+    {
+      "speaker": "rep",
+      "text": "Can you say more about what disaggregation would solve for you?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Our KV cache hit rates fall off a cliff above a million tokens of context, and stranded DRAM on CPU nodes sits around forty percent idle.",
+      "moments": [
+        {
+          "type": "pain",
+          "keywords": [
+            "kv cache",
+            "stranded",
+            "idle",
+            "dram",
+            "context"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Forty percent idle is a lot. How are you thinking about solving it?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "We're prototyping CXL 3.0 switches internally, but the silicon isn't mature and our timeline is eighteen months.",
+      "moments": [
+        {
+          "type": "timeline",
+          "keywords": [
+            "eighteen months",
+            "months",
+            "timeline"
+          ]
+        },
+        {
+          "type": "competitor",
+          "keywords": [
+            "internally",
+            "prototyping",
+            "in-house",
+            "build"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "What would make an external option worth evaluating against building in house?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Proof on p99 tail latency under mixed load. Average latency numbers don't mean anything to us.",
+      "moments": [
+        {
+          "type": "objection",
+          "keywords": [
+            "p99",
+            "tail latency",
+            "latency",
+            "proof"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Understood. Who owns the build versus buy decision?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "My VP of infrastructure, but she'll follow the recommendation from my architecture review.",
+      "moments": [
+        {
+          "type": "decision_maker",
+          "keywords": [
+            "vp",
+            "owns",
+            "decision",
+            "recommendation"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -27,7 +27,8 @@ export async function POST(request) {
       documents: clip(documents, 200000),
     });
 
-    const { model, data } = await geminiJson({ tier: 'smart', prompt, maxTokens: 8000, temperature: 0.2 });
+    const prefer = typeof body.model === 'string' ? body.model.slice(0, 80) : undefined;
+    const { model, data } = await geminiJson({ tier: 'smart', prompt, maxTokens: 8000, temperature: 0.2, prefer });
 
     const glossary = (Array.isArray(data.glossary) ? data.glossary : [])
       .filter((g) => g && g.term && g.explanation)

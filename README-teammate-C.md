@@ -29,10 +29,11 @@ Vercel redeploys within a minute or two. If not, ask Patrick to click **Redeploy
 
 ## Step 1: Refine call types and skills
 
-1. **Review the 4 current skills** (`sales-discovery.md`, `meddicc.md`, `star-behavioral.md`, `technical-depth.md`) against Teammate B's scorecard. Tighten anything that produced weak or off-target questions.
-2. **Check the example follow-ups** Teammate B added to each skill. Each skill should have 2 or 3 pairs of a weak and a strong follow-up.
-3. **Add features the team agrees on.** Write each as a short request to Claude, one feature at a time, and test after each.
-4. **Regression check:** rerun Teammate B's sessions 3 and 4. Make sure latency and quality didn't slip. Note the numbers in the scorecard.
+1. **Read `CHANGELOG.md`** for what's already built (call notes, recap, Pin and Dismiss, click-to-source, talk time, objection badges).
+2. **Review the 4 current skills** (`sales-discovery.md`, `meddicc.md`, `star-behavioral.md`, `technical-depth.md`) against Teammate B's scorecard. Tighten anything that produced weak or off-target questions.
+3. **Check the example follow-ups** Teammate B added to each skill. Each skill should have 2 or 3 pairs of a weak and a strong follow-up.
+4. **Add features the team agrees on.** Write each as a short request to Claude, one feature at a time, and test after each.
+5. **Regression check:** run `npm run eval` (see `evals/README.md`) and make sure nothing regressed. Note the numbers in the scorecard.
 
 ## Step 2: Demo prep and Loom (2 to 3 minutes)
 
@@ -40,9 +41,9 @@ Suggested script:
 
 1. **(15 s) The problem:** a generalist seller or recruiter facing a technical buyer or candidate.
 2. **(30 s) Call setup:** pick the call type, show uploaded documents, click Prepare, show the briefs, term map and guide questions.
-3. **(75 s) Live call:** start a live call (role-play or a podcast tab). Show the transcript with speaker labels, a concept card appearing mid-sentence, follow-up questions, and a guide question getting ticked.
+3. **(75 s) Live call:** start a live call (role-play or a podcast tab). Show the transcript with speaker labels, a concept card appearing mid-sentence, a follow-up question and clicking it to see its source, a guide question getting ticked, and call notes filling in.
 4. **(20 s) Switch to Recruiting interview** and show the different labels, skills and guide.
-5. **(20 s) Results:** the latency bar and one benchmark result from the scorecard.
+5. **(20 s) Results:** the recap with Copy as CRM notes, and one eval or benchmark result.
 
 Record with Loom in Chrome. Use headphones so the mic doesn't pick up the call audio.
 
@@ -56,7 +57,7 @@ Requirements from the assignment memo:
 - Disclose precisely which AI tools were used and how
 - Grading: 50% artifact, 40% brief quality, 10% format adherence. It's judged on use of the course's tools and frameworks and on judgment, not technical quality.
 
-The draft below is about 900 words, so trim as you add results to stay under 1,000. Replace everything in [brackets], fill "What we learned" from Teammate B's findings, and connect it to LTV frameworks and cases from class.
+The draft below is about 980 words with placeholders, so trim as you add results to stay under 1,000. Replace everything in [brackets], fill "What we learned" from Teammate B's findings, and connect it to LTV frameworks and cases from class.
 
 ---
 
@@ -73,11 +74,11 @@ The draft below is about 900 words, so trim as you add results to stay under 1,0
 - Live app: [signal-three-smoky.vercel.app] (passcode available on request)
 - Demo: [Loom link]
 
-Signal captures the user's microphone and the browser tab running the call (Zoom, Meet or Teams). The screen shows the transcript on the left. On the right are "Ask next" (three follow-up questions, refreshed when the other side pauses or during long answers), "Guide questions" (recommended questions from an uploaded interview guide or discovery checklist, ticked off automatically when asked) and "Concepts to know" (plain-English explanations). Users pick a call type, Sales discovery or Recruiting interview, which switches the labels, document types and frameworks (MEDDICC, STAR, technical depth).
+Signal captures the user's microphone and the browser tab running the call (Zoom, Meet or Teams). The transcript is on the left. On the right: "Ask next" (three follow-up questions, each tied to a quote from the call and clickable back to it), "Guide questions" (recommended questions from an uploaded guide, ticked off when asked), "Call notes" (pain points, people, tools, timeline, next steps) and "Concepts to know" (what a term is and what it means in this call). After the call, Signal writes a CRM-ready recap. A call type (Sales discovery or Recruiting interview) switches labels, documents and frameworks (MEDDICC, STAR).
 
 **WHY WE BUILT IT**
 
-[Startup context: 2 to 3 sentences on the target customer, for example generalist business hires, MBA-trained sellers and recruiters at semiconductor and AI-infrastructure companies.] These users are smart but not specialists. On a call with an engineer or a technical candidate, an unfamiliar acronym or industry reference can derail the conversation: they miss the follow-up that matters, skip key qualification questions, or lose credibility. Existing conversation-intelligence tools mostly summarize after the call or are priced for large sales teams, and real-time coaching tools focus on contact centers. Signal helps during the call, for one person, using that person's own documents.
+[Startup context: 2 to 3 sentences on the target customer, for example generalist business hires, MBA-trained sellers and recruiters at semiconductor and AI-infrastructure companies.] These users are smart but not specialists. On a call with an engineer or technical candidate, an unfamiliar acronym or industry reference can derail them: they miss the follow-up that matters or lose credibility. Existing conversation-intelligence tools mostly summarize after the call or are priced for large sales teams, and real-time coaching tools focus on contact centers. Signal helps during the call, for one person, using that person's own documents.
 
 **HOW IT WORKS**
 
@@ -85,6 +86,7 @@ Signal captures the user's microphone and the browser tab running the call (Zoom
 - **Preparation:** before the call, uploaded documents are condensed by Google's Gemini into two short briefs (the other side, our side), a term map of likely technical terms with explanations, and a list of guide questions.
 - **Live analysis:** known terms are explained instantly from the term map. New terms go to a fast Gemini model. Questions stream from Gemini using the last 90 seconds, a running summary, the briefs and the active skills.
 - **Stack:** GitHub (shared code), Vercel (hosting plus small server functions that keep API keys secret), AssemblyAI and the Gemini API on free tiers.
+- **Evaluation:** an eval runner plays five scripted sales calls through the real app and scores transcription accuracy, speaker accuracy, coverage of key moments, question quality and stability, and latency, so each change can be compared with the last.
 
 Key design decisions:
 

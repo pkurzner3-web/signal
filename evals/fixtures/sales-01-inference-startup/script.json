@@ -1,0 +1,121 @@
+{
+  "title": "ML platform lead at an inference startup",
+  "voices": {
+    "rep": "Samantha",
+    "prospect": "Daniel"
+  },
+  "turns": [
+    {
+      "speaker": "rep",
+      "text": "Thanks for making time today. To start, can you walk me through how you serve models right now?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Sure. We run a chat product on about four hundred H100s, mostly serving a seventy billion parameter model with vLLM.",
+      "moments": []
+    },
+    {
+      "speaker": "rep",
+      "text": "Got it. Where does that setup start to struggle?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Long context is the big one. Once conversations pass about a hundred thousand tokens the KV cache blows past GPU memory and we start evicting, so latency spikes.",
+      "moments": [
+        {
+          "type": "pain",
+          "keywords": [
+            "memory",
+            "kv cache",
+            "long context",
+            "context",
+            "latency"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "How are you handling that today?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Honestly we've been buying more H200s mostly for the extra HBM, which is painful because we don't need the compute.",
+      "moments": [
+        {
+          "type": "competitor",
+          "keywords": [
+            "h200",
+            "gpu",
+            "hbm",
+            "buying"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Makes sense. Is solving this tied to any timeline on your side?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "We want something in production before our enterprise launch at the end of Q2, so a pilot would need to start next month.",
+      "moments": [
+        {
+          "type": "timeline",
+          "keywords": [
+            "q2",
+            "pilot",
+            "timeline",
+            "launch",
+            "month"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "And who besides you would weigh in on a decision like this?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Our CTO signs off on anything over fifty thousand dollars, and the infra team would run the pilot.",
+      "moments": [
+        {
+          "type": "decision_maker",
+          "keywords": [
+            "cto",
+            "sign",
+            "approve",
+            "decision"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Helpful. One concern people raise with CXL is latency. Is that on your mind?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Yeah, if pooled memory adds more than a few microseconds per token, the whole thing is dead on arrival for us.",
+      "moments": [
+        {
+          "type": "objection",
+          "keywords": [
+            "latency",
+            "microsecond",
+            "slow",
+            "risk"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "title": "Head of research infrastructure at a trading firm",
+  "voices": {
+    "rep": "Samantha",
+    "prospect": "Daniel"
+  },
+  "turns": [
+    {
+      "speaker": "rep",
+      "text": "Thanks for meeting. How does your team use large models today?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Research uses them to summarize filings and earnings calls overnight. It all has to stay on our own hardware for compliance.",
+      "moments": []
+    },
+    {
+      "speaker": "rep",
+      "text": "What's the main bottleneck in that workflow?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "The overnight batch barely finishes before the market opens. When it slips, analysts start the day without summaries.",
+      "moments": [
+        {
+          "type": "pain",
+          "keywords": [
+            "batch",
+            "finishes",
+            "slips",
+            "overnight",
+            "bottleneck"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "What would good look like?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Batch done by four a.m. with room to double the number of documents next year.",
+      "moments": []
+    },
+    {
+      "speaker": "rep",
+      "text": "Have you looked at other ways to get there?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "We tried CPU offload with open source tools. It worked, but throughput dropped by half.",
+      "moments": [
+        {
+          "type": "competitor",
+          "keywords": [
+            "cpu offload",
+            "open source",
+            "tried",
+            "alternative"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Is there budget set aside for this?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "There's about two hundred thousand in this year's hardware budget, but it's use it or lose it by December.",
+      "moments": [
+        {
+          "type": "budget",
+          "keywords": [
+            "budget",
+            "two hundred thousand",
+            "december"
+          ]
+        },
+        {
+          "type": "timeline",
+          "keywords": [
+            "december",
+            "year"
+          ]
+        }
+      ]
+    },
+    {
+      "speaker": "rep",
+      "text": "Who would sign off?",
+      "moments": []
+    },
+    {
+      "speaker": "prospect",
+      "text": "Me for the pilot. Anything production goes to our COO and the compliance team.",
+      "moments": [
+        {
+          "type": "decision_maker",
+          "keywords": [
+            "coo",
+            "compliance",
+            "sign off",
+            "production"
+          ]
+        }
+      ]
+    }
+  ]
+}

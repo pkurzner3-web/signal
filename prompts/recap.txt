@@ -1,0 +1,10 @@
+Write a post-call recap for a {{meeting_type}} meeting, ready to paste into a CRM or notes app. The user is "You"; the other side is "{{other_label}}".
+
+Plain text, no markdown symbols except "- " for bullets. Under 200 words. Use these headings on their own lines, in this order: Summary, {{note_headings}}, Open questions.
+Only include facts that were said in the call. Write "None noted" under a heading with nothing to report.
+
+Call notes (JSON):
+{{notes}}
+
+Transcript:
+{{transcript}}

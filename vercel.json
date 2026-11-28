@@ -1,4 +1,5 @@
 {
+  "installCommand": "echo 'Signal has no runtime dependencies'",
   "functions": {
     "api/*.js": {
       "includeFiles": "prompts/**",
